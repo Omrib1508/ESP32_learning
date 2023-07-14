@@ -5,7 +5,7 @@ const uint8_t PushButton = 4; // led at GPIO D4
 int           buttonState = 0;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 
   pinMode(PushButton, INPUT);
   pinMode(RedLed, OUTPUT);
@@ -14,6 +14,7 @@ void setup() {
 void loop() {
   buttonState = digitalRead(PushButton);
   Serial.println(buttonState);
+  delay(100);
 
   if (buttonState == HIGH)
   {
