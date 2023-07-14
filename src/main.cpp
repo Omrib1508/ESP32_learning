@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 const uint8_t RedLed = 4; // led at GPIO D4
-const int     freq = 5000;
+const int     freq = 500;
 const int     ledChannel = 0;
 const uint8_t resultion = 8;
 
