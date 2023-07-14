@@ -1,28 +1,17 @@
 #include <Arduino.h>
 
-const uint8_t RedLed = 5; // led at GPIO D5
-const uint8_t PushButton = 4; // led at GPIO D4
-int           buttonState = 0;
+const uint8_t PotenResistor = 4; // led at GPIO D4
+int           potenValue = 0;
 
 void setup() {
   Serial.begin(9600);
 
-  pinMode(PushButton, INPUT);
-  pinMode(RedLed, OUTPUT);
+  pinMode(PotenResistor, INPUT);
+  delay(2000);
 }
 
 void loop() {
-  buttonState = digitalRead(PushButton);
-  Serial.println(buttonState);
-  delay(100);
-
-  if (buttonState == HIGH)
-  {
-    digitalWrite(RedLed, HIGH);
-  }
-  else
-  {
-    digitalWrite(RedLed, LOW);
-  }
-  
+  potenValue = analogRead(PotenResistor);
+  Serial.println(potenValue);
+  delay(500);
 }
