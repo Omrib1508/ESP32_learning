@@ -2,7 +2,7 @@
 
 #define SECONDS 5
 
-const uint8_t RedLed = 25; // led at GPIO D34
+const uint8_t RedLed = 25; // led at GPIO D25
 const uint8_t SIRmotion = 27; // SIR motion sensor at GPIO D27
 const uint8_t Buzzer = 26; // Buzzer at GPIO D26
 
