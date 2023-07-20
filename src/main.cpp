@@ -1,101 +1,115 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include "WiFiNetwork.h"
 
 const uint8_t RedLed = 26; // led at GPIO D26
 const uint8_t GreenLed = 27; // led at GPIO D27
-
-const char *ssid = "benshahar";  
-const char *password = "9263139926";
-int         counter = 0;
-
-// Set web server port number to 80
-WiFiServer server(80);
-
-// Variable to store the HTTP request
-String header;
-
-// Auxiliar variables to store the current output state
-String RedLedState = "off";   // status of the red led
-String GreenLedState = "off"; // status of the green led
-
+String        readBuffer;
+String        RedLedState = "off";   // status of the red led
+String        GreenLedState = "off"; // status of the green led
+WiFiServer    server(80); // Set web server port number to 80
 unsigned long currentTime = millis();
-unsigned long previousTime = 0;
-const    long timeout = 3000;
 
-void initWiFi() {
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi ..");
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print('.');
-    delay(1000);
-  }
-  Serial.println(WiFi.localIP());
-}
+const char*   ssid;
+const char*   password;
 
 void setup() {
-  Serial.begin(115200);
-
+  wl_status_t connecntionStatus;
+  int          scanIteration = 0;
   pinMode(RedLed, OUTPUT);
   pinMode(GreenLed, OUTPUT);
 
   digitalWrite(RedLed, LOW);
   digitalWrite(GreenLed, LOW);
+  
+  Serial.begin(115200);
+  Serial.println("Scanning for network. Please enter the number of scans:");
+  while (!Serial.available()) {}
+  scanIteration = Serial.parseInt();
+  Serial.println(scanIteration);
+  scanNetworks(scanIteration);
 
-  Serial.print("Conntecting to newtork:");
+  Serial.end();
+  Serial.begin(115200);
+  Serial.println("Please enter the ssid:");
+  while (!Serial.available()) {}
+  readBuffer = Serial.readStringUntil('\n');
+  ssid = readBuffer.c_str();
   Serial.println(ssid);
-  initWiFi();
+  Serial.end();
 
-  Serial.println("");
-  Serial.println("WiFi connected.");
-  Serial.print("IP address is: ");
-  Serial.println(WiFi.softAPIP());
+  Serial.begin(115200);
+  Serial.println("Please enter the ssid password:");
+  while (!Serial.available()) {}
+  readBuffer = Serial.readStringUntil('\n');
+  password = readBuffer.c_str();
+  Serial.println(password);
+  Serial.end();
+
+  Serial.begin(115200);
+  Serial.print("Conntecting to newtork: ");
+  Serial.println(ssid);
+  connecntionStatus = initNetworkStation(ssid, password);
+  if (connecntionStatus != WL_CONNECTED)
+  {
+    ESP.restart();
+  }
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
   server.begin();
 }
 
 void loop() {
-  WiFiClient client = server.available();   // Listen for incoming clients
+  WiFiClient    client;
+  String        clientInputBuffer;
+  String        header; // variable for storing HTTP request
+  char          readByte;
+  unsigned long initClientTime = 0;
+
+  client = server.available();   // Listen for incoming clients
   
   if (client) {                             // If a new client connects,
-    currentTime = millis();
-    previousTime = currentTime;
     Serial.println("New Client");          // print a message out in the serial port
-    
-    String currentLine = "";                // make a String to hold incoming data from the client
-    while (client.connected() && (currentTime - previousTime <= timeout)) {  // loop while the client's connected
+    clientInputBuffer = "";                // make a String to hold incoming data from the client
+    initClientTime = millis();
+    while (client.connected()) {  // loop while the client's connected
       currentTime = millis();
+      if (currentTime - initClientTime <= CLIENTCONNECTIONTIMEOUT)
+      {
+        Serial.println("Client connection timeout.");
+        Serial.println("");
+        break;
+      }
+      
       if (client.available()) {             // if there's bytes to read from the client,
-        
-        char readByte = client.read();             // read a byte, then
+        readByte = client.read();             // read a byte, then
         Serial.write(readByte);                    // print it out the serial monitor
         header += readByte;
         if (readByte == '\n') {                    // if the byte is a newline character
-          if (currentLine.length() == 0) {
+          if (clientInputBuffer.length() == 0) {
             client.println("HTTP/1.1 200 OK");
             client.println("Content-type:text/html");
             client.println("Connection: close");
             client.println();
             
             // turns the GPIOs on and off
-            if (header.indexOf("GET /GPIO26(RedLed)/on") >= 0) {
-              Serial.println("RedLed is on");
+            if (header.indexOf("GET /26/on") >= 0) {
+              Serial.println("GPIO 26 on");
               RedLedState = "on";
               digitalWrite(RedLed, HIGH);
-            } else if (header.indexOf("GET /GPIO26(RedLed)/off") >= 0) {
-              Serial.println("RedLed is off");
+            } else if (header.indexOf("GET /26/off") >= 0) {
+              Serial.println("GPIO 26 off");
               RedLedState = "off";
               digitalWrite(RedLed, LOW);
-            } else if (header.indexOf("GET /GPIO26(GreenLed)/on") >= 0) {
-              Serial.println("GreenLed is on");
+            } else if (header.indexOf("GET /27/on") >= 0) {
+              Serial.println("GPIO 27 on");
               GreenLedState = "on";
               digitalWrite(GreenLed, HIGH);
-            } else if (header.indexOf("GET /GPIO26(GreenLed)/off") >= 0) {
-              Serial.println("GreenLed is off");
+            } else if (header.indexOf("GET /27/off") >= 0) {
+              Serial.println("GPIO 27 off");
               GreenLedState = "off";
               digitalWrite(GreenLed, LOW);
             }
-
             // Display the HTML web page
             client.println("<!DOCTYPE html><html>");
             client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
@@ -111,7 +125,7 @@ void loop() {
             client.println("<body><h1>ESP32 Web Server</h1>");
             
             // Display current state, and ON/OFF buttons for GPIO 26  
-            client.println("<p>GPIO 26 - State " + RedLedState + "</p>");
+            client.println("<p>Red Led - State " + RedLedState + "</p>");
             // If the output26State is off, it displays the ON button       
             if (RedLedState=="off") {
               client.println("<p><a href=\"/26/on\"><button class=\"button\">ON</button></a></p>");
@@ -120,7 +134,7 @@ void loop() {
             } 
                
             // Display current state, and ON/OFF buttons for GPIO 27  
-            client.println("<p>GPIO 27 - State " + GreenLedState + "</p>");
+            client.println("<p>Green Led - State " + GreenLedState + "</p>");
             // If the output27State is off, it displays the ON button       
             if (GreenLedState=="off") {
               client.println("<p><a href=\"/27/on\"><button class=\"button\">ON</button></a></p>");
@@ -134,12 +148,13 @@ void loop() {
             // Break out of the while loop
             break;
           } else { // if you got a newline, then clear currentLine
-            currentLine = "";
+            clientInputBuffer = "";
           }
         } else if (readByte != '\r') {  // if you got anything else but a carriage return character,
-          currentLine += readByte;      // add it to the end of the currentLine
+          clientInputBuffer += readByte;      // add it to the end of the currentLine
         }
       }
+      initClientTime = currentTime;
     }
     // Clear the header variable
     header = "";
