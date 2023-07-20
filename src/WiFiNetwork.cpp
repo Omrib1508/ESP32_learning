@@ -52,8 +52,12 @@ void scanNetworks(int scanIteration)
           default:                        Serial.print("unknown");
         }
         Serial.println();
+        delay(200);
       }
+      Serial.println("");
+      WiFi.scanDelete();
     }
+    
   }
 }
 
@@ -65,6 +69,7 @@ wl_status_t initNetworkStation(const char* ssid, const char* password) {
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
+  delay(500);
   WiFi.begin(ssid, password);
   Serial.print("Connecting to WiFi ..");
   initSearchTime = millis();

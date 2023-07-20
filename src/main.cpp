@@ -9,10 +9,9 @@ String        RedLedState = "off";   // status of the red led
 String        GreenLedState = "off"; // status of the green led
 WiFiServer    server(80); // Set web server port number to 80
 unsigned long currentTime = millis();
-
-const char*   ssid;
-const char*   password;
-
+char*         ssid;
+char*         password;
+int           menuChoose;
 void setup() {
   wl_status_t connecntionStatus;
   int          scanIteration = 0;
@@ -23,40 +22,57 @@ void setup() {
   digitalWrite(GreenLed, LOW);
   
   Serial.begin(115200);
-  Serial.println("Scanning for network. Please enter the number of scans:");
+  Serial.println("Choose from menu:");
+  Serial.println("1 - Scan networks");
+  Serial.println("2 - Create Station throw network");
   while (!Serial.available()) {}
-  scanIteration = Serial.parseInt();
-  Serial.println(scanIteration);
-  scanNetworks(scanIteration);
+  menuChoose = Serial.readStringUntil('\n').toInt();
 
-  Serial.end();
-  Serial.begin(115200);
-  Serial.println("Please enter the ssid:");
-  while (!Serial.available()) {}
-  readBuffer = Serial.readStringUntil('\n');
-  ssid = readBuffer.c_str();
-  Serial.println(ssid);
-  Serial.end();
-
-  Serial.begin(115200);
-  Serial.println("Please enter the ssid password:");
-  while (!Serial.available()) {}
-  readBuffer = Serial.readStringUntil('\n');
-  password = readBuffer.c_str();
-  Serial.println(password);
-  Serial.end();
-
-  Serial.begin(115200);
-  Serial.print("Conntecting to newtork: ");
-  Serial.println(ssid);
-  connecntionStatus = initNetworkStation(ssid, password);
-  if (connecntionStatus != WL_CONNECTED)
+  switch (menuChoose)
   {
-    ESP.restart();
+    case 1:
+      Serial.println("Scanning for network. Please enter the number of scans:");
+      while (!Serial.available()) {}
+      scanIteration = Serial.readStringUntil('\n').toInt();
+      Serial.println(scanIteration);
+      scanNetworks(scanIteration);
+      break;
+    case 2:
+      Serial.println("Please enter the ssid:");
+      while (!Serial.available()) {}
+      readBuffer = Serial.readStringUntil('\n');
+      ssid = new char[readBuffer.length() + 1];
+      strcpy(ssid, readBuffer.c_str());
+      Serial.println(ssid);
+    
+      Serial.println("Please enter the ssid password:");
+      while (!Serial.available()) {}
+      readBuffer = Serial.readStringUntil('\n');
+      password = new char[readBuffer.length() + 1];
+      strcpy(password, readBuffer.c_str());
+      Serial.println(password);
+
+      Serial.print("Conntecting to newtork: ");
+      Serial.println(ssid);
+      connecntionStatus = initNetworkStation(ssid, password);
+      if (connecntionStatus != WL_CONNECTED)
+      {
+        Serial.print(connecntionStatus);
+        ESP.restart();
+      }
+      Serial.println("IP address: ");
+      Serial.println(WiFi.localIP());
+      server.begin();
+      break;
+
+    default:
+      if (connecntionStatus != WL_CONNECTED)
+      {
+        Serial.print("Choose not good");
+        ESP.restart();
+      }
+      break;
   }
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  server.begin();
 }
 
 void loop() {
