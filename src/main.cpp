@@ -36,6 +36,7 @@ void setup() {
       scanIteration = Serial.readStringUntil('\n').toInt();
       Serial.println(scanIteration);
       scanNetworks(scanIteration);
+      ESP.restart();
       break;
     case 2:
       Serial.println("Please enter the ssid:");
@@ -87,16 +88,10 @@ void loop() {
   if (client) {                             // If a new client connects,
     Serial.println("New Client");          // print a message out in the serial port
     clientInputBuffer = "";                // make a String to hold incoming data from the client
-    initClientTime = millis();
-    while (client.connected()) {  // loop while the client's connected
+    currentTime = millis();
+    initClientTime = currentTime;
+    while (client.connected() && (currentTime - initClientTime <= CLIENTCONNECTIONTIMEOUT)) {  // loop while the client's connected
       currentTime = millis();
-      if (currentTime - initClientTime <= CLIENTCONNECTIONTIMEOUT)
-      {
-        Serial.println("Client connection timeout.");
-        Serial.println("");
-        break;
-      }
-      
       if (client.available()) {             // if there's bytes to read from the client,
         readByte = client.read();             // read a byte, then
         Serial.write(readByte);                    // print it out the serial monitor
@@ -170,7 +165,6 @@ void loop() {
           clientInputBuffer += readByte;      // add it to the end of the currentLine
         }
       }
-      initClientTime = currentTime;
     }
     // Clear the header variable
     header = "";
