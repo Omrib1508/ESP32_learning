@@ -18,6 +18,8 @@
 #define SEARCHNETOWRKSTIMEOUT       10000
 #define CLIENTCONNECTIONTIMEOUT     10000
 
+WiFiServer    server(80); // Set web server port number to 80
+
 /////////////////////////////////////////////////////////////////////
 ///                             FUNCTIONS                         ///
 /////////////////////////////////////////////////////////////////////
