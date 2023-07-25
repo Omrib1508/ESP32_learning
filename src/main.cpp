@@ -69,7 +69,7 @@ void loop() {
       Serial.print("Conntecting to newtork: ");
       Serial.println(ssid);
       connecntionStatus = initNetworkStation(ssid, password);
-      i f (connecntionStatus != WL_CONNECTED)
+      if (connecntionStatus != WL_CONNECTED)
       {
         Serial.print(connecntionStatus);
         ESP.restart();
