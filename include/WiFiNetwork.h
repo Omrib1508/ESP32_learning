@@ -18,8 +18,6 @@
 #define SEARCHNETOWRKSTIMEOUT       10000
 #define CLIENTCONNECTIONTIMEOUT     10000
 
-WiFiServer    server(80); // Set web server port number to 80
-
 /////////////////////////////////////////////////////////////////////
 ///                             FUNCTIONS                         ///
 /////////////////////////////////////////////////////////////////////
@@ -40,6 +38,17 @@ void scanNetworks(int scanIteration);
 * @return the network connection status
 ********************************************************************/
 wl_status_t initNetworkStation(const char* ssid, const char* password);
+
+/********************************************************************
+* This function do all the commands for client server connection
+*
+* @param redChannel: the RGB red channel
+* @param greenChannel: the RGB green channel
+* @param blueChannel: the RGB blue channel
+*
+* @return the network connection status
+********************************************************************/
+void clientConnection(WiFiServer server, const int redChannel, const int greenChannel, const int blueChannel);
 
 /////////////////////////////////////////////////////////////////////
 ///                             CALLBACKS                         ///
